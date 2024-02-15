@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
-
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = process.env.PORT || 3500
 const bodyParser = require('body-parser');
@@ -26,11 +26,7 @@ app.use(express.json());
 app.use('/api/products', productRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/exchange', exchangeRequestRoutes);
-app.use('/api/auth', authRouter);
 
-
-//rout
-// app.use('/api/auth', require('./src/routes/auth'));
 
 // Multer middleware for handling file uploads
 const storage = multer.diskStorage({
@@ -59,7 +55,7 @@ mongoose.connection.on('connected', () => {
   console.log('Connected to MongoDB Atlas');
 });
 
-// Define a Mongoose model for product
+// Define a Mongoose model for product sell
 mongoose.models = {};
 const Product = mongoose.model('Product', {
   productName: String,
@@ -76,8 +72,7 @@ const donationSchema = new mongoose.Schema({
   donationAmount: Number,
   donorName: String,
   donorPhoto: String,
-  selectedCause: String,
-  selectedOrganization: String,
+  selectedNGO: String,
   percentage: Number,
   productName: String,
   selectedWatchType: String,
@@ -97,10 +92,13 @@ const exchangeRequestSchema = new mongoose.Schema({
   watchPhoto: String,
 });
 
+// Define User schema
+
+
 
 
 // const authRouter = require('./src/routes/auth');
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 const ExchangeRequest = mongoose.model('ExchangeRequest', exchangeRequestSchema);
 
@@ -112,7 +110,7 @@ const ExchangeRequest = mongoose.model('ExchangeRequest', exchangeRequestSchema)
 
 
 
-// API endpoint for handling form submissions for product
+// API endpoint for handling form submissions for product selll
 app.post('/api/products', upload.single('image'), async (req, res) => {
   const { productName, watchType, brandName, condition, reasonForSelling } = req.body;
   const imagePath = req.file ? req.file.path : '';
@@ -140,28 +138,25 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
 
 
 
-// API endpoint for handling form submissions for product donate
+
 // API endpoint for handling form submissions for donate
 app.post('/api/donations', upload.single('donorPhoto'), async (req, res) => {
   try {
     const {
       donationType,
+      donationAmount,
       donorName,
-      selectedCause,
-      selectedOrganization,
+      selectedNGO,
       percentage,
       productName,
       selectedWatchType,
       watchYear,
       selectedBrand,
-      image: imagePath,
     } = req.body;
 
     const newDonation = new Donation({
       donationType,
-      selectedCause,
-      selectedOrganization,
-      
+      donationAmount,
       donorName,
       donorPhoto: req.file ? req.file.path : null,
       selectedNGO,
@@ -212,11 +207,10 @@ app.post('/api/exchangerequests', async (req, res) => {
 
 
 
+
 //login
 
 
-// //server  for login
-// app.use('/api/auth', authRoutes);
 
 
 
