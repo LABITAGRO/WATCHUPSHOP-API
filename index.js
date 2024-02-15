@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+
 const app = express();
 const PORT = process.env.PORT || 3500
 const bodyParser = require('body-parser');
@@ -18,10 +18,8 @@ const authRouter = require('./src/routes/auth');
 
 
 // Enable CORS for all origins
-aapp.use(cors({
-  origin: 'https://watchupshop.onrender.com', // Replace with your frontend URL on Render
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}));
+app.use(cors());
+
 
 app.use(express.json());
 
@@ -78,7 +76,8 @@ const donationSchema = new mongoose.Schema({
   donationAmount: Number,
   donorName: String,
   donorPhoto: String,
-  selectedNGO: String,
+  selectedCause: String,
+  selectedOrganization: String,
   percentage: Number,
   productName: String,
   selectedWatchType: String,
@@ -98,15 +97,7 @@ const exchangeRequestSchema = new mongoose.Schema({
   watchPhoto: String,
 });
 
-// Define User schema
-const UserSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  username: String,
-  password: String
-});
 
-const User = mongoose.model('User', UserSchema);
 
 // const authRouter = require('./src/routes/auth');
 app.use(bodyParser.json());
@@ -114,8 +105,7 @@ app.use(bodyParser.json());
 const ExchangeRequest = mongoose.model('ExchangeRequest', exchangeRequestSchema);
 
 // Import routes
-// const authRoutes = require('./src/routes/auth');
-const profileRoutes = require('./src/routes/profile');
+
 
 
 
@@ -156,19 +146,22 @@ app.post('/api/donations', upload.single('donorPhoto'), async (req, res) => {
   try {
     const {
       donationType,
-      donationAmount,
       donorName,
-      selectedNGO,
+      selectedCause,
+      selectedOrganization,
       percentage,
       productName,
       selectedWatchType,
       watchYear,
       selectedBrand,
+      image: imagePath,
     } = req.body;
 
     const newDonation = new Donation({
       donationType,
-      donationAmount,
+      selectedCause,
+      selectedOrganization,
+      
       donorName,
       donorPhoto: req.file ? req.file.path : null,
       selectedNGO,
@@ -191,8 +184,21 @@ app.post('/api/donations', upload.single('donorPhoto'), async (req, res) => {
 // API endpoint for handling form submissions for exchnage
 app.post('/api/exchangerequests', async (req, res) => {
   try {
-    const exchangeRequest = new ExchangeRequest(req.body);
+    const { productName, watchType, watchYear, watchBrand, watchCondition, watchPhoto } = req.body;
+
+    // Create a new exchange request
+    const exchangeRequest = new ExchangeRequest({
+      productName,
+      watchType,
+      watchYear,
+      watchBrand,
+      watchCondition,
+      watchPhoto,
+    });
+
+    // Save the exchange request to the database
     await exchangeRequest.save();
+
     res.status(201).json({ message: 'Exchange request submitted successfully' });
   } catch (error) {
     console.error('Error submitting exchange request:', error);
@@ -203,61 +209,11 @@ app.post('/api/exchangerequests', async (req, res) => {
 
 // Route to handle user registration
 // Register endpoint
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, username, password } = req.body;
-
-    // Check if user with the same username already exists
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-
-    // Create a new user
-    const newUser = new User({
-      name,
-      email,
-      username,
-      password
-    });
-
-    // Save user to database
-    await newUser.save();
-
-    // Respond with success message
-    res.status(200).json({ message: 'Registration successful' });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
-  }
-});
 
 
 
 //login
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
 
-    // Find the user by username
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Check if the password is correct
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
-
-    // Password is correct, return success response
-    res.status(200).json({ message: 'Login successful', user });
-  } catch (error) {
-    console.error('Error logging in:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 // //server  for login
 // app.use('/api/auth', authRoutes);
