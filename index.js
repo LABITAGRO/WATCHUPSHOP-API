@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+
 const app = express();
 const PORT = process.env.PORT || 3500
 const bodyParser = require('body-parser');
