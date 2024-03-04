@@ -104,6 +104,15 @@ const ExchangeRequest = mongoose.model('ExchangeRequest', exchangeRequestSchema)
 
 // Import routes
 
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+})
+
+// Create a mongoose model based on the schema
+const User = mongoose.model("User", userSchema)
+
 
 
 
@@ -209,6 +218,33 @@ app.post('/api/exchangerequests', async (req, res) => {
 
 
 //login
+
+app.post("/signup", async (req, res) => {
+  try {
+    const user = new User(req.body)    // Create a new user based on the request body
+    await user.save()
+    res.status(201).json({ message: "User registered successfully" })
+  } catch (error) {
+    console.error("Error: ", error)
+    res.status(500).json({ error: "Error occurred while registering the user" })
+  }
+})
+
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email, password });   // Find the user by email and password
+
+    if (user) {
+      res.status(200).json({ message: "Login successful" });
+    } else {
+      res.status(401).json({ error: "Login failed" });
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "An error occurred during login" });
+  }
+});
 
 
 
